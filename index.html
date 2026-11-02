@@ -3404,6 +3404,7 @@ const SCREENS = {
     };
     const end = `<section class="fcard fend">${ic('sparkles', 'big')}<h2>Das waren alle Jobs ${act ? 'in dieser Kategorie' : 'in deiner Nähe'}</h2><p>Neue Schichten kommen laufend dazu. Mit Profil bekommst du eine Push-Nachricht, sobald etwas Passendes online ist.</p><button class="btn" data-act="feedTop">Von vorne ansehen</button>${act ? '<button class="btn ghost" data-act="clearCat">Alle Tätigkeiten zeigen</button>' : '<button class="btn ghost" data-act="radius">Umkreis auf 10 km erweitern</button>'}</section>`;
     const loading = !feedLoaded; feedLoaded = true;
+    if (loading) setTimeout(() => { const l = document.querySelector('.floader'); if (l) l.remove(); }, 1400);
     return `<div class="scr bleed feedscr">${sb(true)}
       <div class="feedtop"><span class="wordmark">Job<span>Match</span></span>${act ? `<button class="glass first acc" data-act="clearCat">${act[1]} ${ic('close')}</button><span class="glass">${ic('location')}5 km</span>` : `<span class="glass first">${ic('location')}Karlsruhe · 5 km</span>`}</div>
       <div class="feed" id="feed">${list.map(card).join('')}${end}</div>
