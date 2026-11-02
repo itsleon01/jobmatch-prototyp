@@ -553,10 +553,31 @@ button.tag { cursor: pointer; }
 /* Umkreis-Sheet */
 .rmap { border-radius: 16px; overflow: hidden; background: #F4F4F5; box-shadow: inset 0 0 0 1px var(--line); }
 .rmap svg { display: block; width: 100%; height: auto; }
-#r-circ { fill: rgba(255, 122, 0, .14); stroke: var(--or); stroke-width: 2; transition: rx .2s, ry .2s; }
-.rdot { fill: #A1A1AA; stroke: #fff; stroke-width: 2; }
+#r-circ { fill: rgba(255, 122, 0, .13); stroke: var(--or); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.rdot { fill: #A1A1AA; stroke: #fff; stroke-width: 2px; vector-effect: non-scaling-stroke; }
 .rdot.in { fill: var(--or); }
-.rme { fill: #2563EB; }
+#k-me { fill: #2563EB; stroke: #fff; }
+.rmap { aspect-ratio: 300 / 175; }
+.rmap svg { height: 100%; }
+#kamap .k-bg { fill: #F2EFE9; }
+#kamap .k-wood { fill: #CFE5C4; }
+#kamap .k-town { fill: #E6E1D8; }
+#kamap .k-park { fill: #BFDDB0; }
+#kamap .k-water { fill: #A9CBEA; }
+#kamap .k-river, #kamap .k-alb { fill: none; stroke: #A9CBEA; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+#kamap .k-river { stroke-width: 7px; } #kamap .k-alb { stroke-width: 2px; }
+#kamap .k-mw, #kamap .k-pr, #kamap .k-st, #kamap .k-path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+#kamap .k-mw { stroke: #F4B860; stroke-width: 3.5px; }
+#kamap .k-pr { stroke: #fff; stroke-width: 3px; }
+#kamap .k-st { stroke: #fff; stroke-width: 1.6px; }
+#kamap .k-path { stroke: #B3D3A3; stroke-width: 1px; }
+#kamap .k-schloss { fill: #B8A99A; }
+#kamap text { font-family: inherit; font-weight: 700; fill: #57534E; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(255,255,255,.85); stroke-linejoin: round; pointer-events: none; }
+#kamap .kl-r, #kamap .kl-R { fill: #4B8BC8; font-style: italic; } #kamap .kl-w { fill: #4D7C3A; font-style: italic; } #kamap .kl-c { font-weight: 800; fill: #292524; }
+#k-labels .kl { display: none; }
+#k-labels[data-z="near"] .kl-d, #k-labels[data-z="near"] .kl-s, #k-labels[data-z="near"] .kl-w { display: inline; }
+#k-labels[data-z="city"] .kl-d, #k-labels[data-z="city"] .kl-r, #k-labels[data-z="city"] .kl-w { display: inline; }
+#k-labels[data-z="region"] .kl-t, #k-labels[data-z="region"] .kl-r, #k-labels[data-z="region"] .kl-c, #k-labels[data-z="region"] .kl-T, #k-labels[data-z="far"] .kl-T, #k-labels[data-z="far"] .kl-R, #k-labels[data-z="far"] .kl-c { display: inline; }
 .rloc { display: flex; align-items: center; gap: 10px; }
 .rloc > svg { width: 22px; height: 22px; color: var(--or); flex: none; }
 .rloc b { display: block; font-size: 15px; }
@@ -568,6 +589,7 @@ button.tag { cursor: pointer; }
 .rticks { display: flex; justify-content: space-between; margin-top: -8px; padding: 0 4px; font-size: 12px; color: var(--gray2); }
 .rticks span.on { color: var(--or); font-weight: 800; }
 button.glass { cursor: pointer; }
+#kamap[data-z="far"] .k-city, #kamap[data-z="region"] .k-city { display: none; }
 </style>
 </head>
 <body>
@@ -2921,7 +2943,7 @@ const JOBS = [
     applyText: 'Hallo, ich habe am Samstag Zeit und schon Frühstücksservice gemacht.',
     answers: { exp: 'Ein bisschen Service-Erfahrung ist gut, den Rest zeigen wir dir.', wear: 'Dunkle Kleidung, die Schürze bekommst du von uns.', park: 'Direkt vor der Tür hält die Linie 2, Parkplätze gibt es in der Seitenstraße.' } },
   { id: 'anker', title: 'Küchenhilfe', pos: 'Küchenhilfe', cat: 'kueche', catLabel: 'Küche', biz: 'Brauhaus Zum Anker', ini: 'BA', col: '#78350F',
-    kind: 'Brauhaus · Karlsruhe-Durlach', rating: '4,6', nrev: 37, dist: '3,4 km', date: D_TOM, time: '16:00–22:00',
+    kind: 'Brauhaus · Karlsruhe-Durlach', rating: '4,6', nrev: 37, dist: '4,6 km', date: D_TOM, time: '16:00–22:00',
     pay: 'ab 14 €/Std.', extra: 'Sonntag & Feiertag +25 %', expect: [['Keine Vorkenntnisse nötig', 1], ['Belehrung nach § 43 IfSG', 0]],
     tasks: 'Gemüse vorbereiten, Beilagen anrichten, Küche sauber halten.',
     reviews: [['4', 'Stressig am Wochenende, aber gutes Essen fürs Team.', 'Ali, Aushilfe in der Küche · Sept. 2026'], ['Team', '„Wir erklären lieber zweimal als einmal zu wenig.“', 'Küchenchef Bernd, seit 2015']],
@@ -3371,17 +3393,10 @@ let tick = 0, agOnline = 23, feedLoaded = false;
 const KM_STEPS = [1, 2, 3, 5, 10, 15, 25];
 const anKm = () => (S.me && parseInt(String(S.me.radius).replace(/\D/g, ''), 10)) || (S.an && S.an.km) || 5;
 const jobKm = (j) => parseFloat(String(j.dist).replace(',', '.')) || 0;
-const kmPx = (k) => 16 + 62 * Math.log(k + 1) / Math.log(26);
-const JOB_ANG = { luna: 30, gluehwein: 200, mozart: 300, anker: 110, halle: 240, hotel: 150 };
-function radiusMap() {
-  const streets = '<path d="M0 60 Q90 52 150 85 T300 70M0 135 Q110 120 150 85 T300 150M60 0 Q80 80 150 85 T210 170M250 0 Q215 60 150 85" stroke="#E4E4E7" stroke-width="5" fill="none"/>';
-  const dots = JOBS.map((j) => { const a = (JOB_ANG[j.id] ?? (j.id.length * 47)) * Math.PI / 180, r = kmPx(jobKm(j)); return `<circle class="rdot" data-km="${jobKm(j)}" cx="${(150 + Math.cos(a) * r).toFixed(1)}" cy="${(85 + Math.sin(a) * r * .8).toFixed(1)}" r="5"/>`; }).join('');
-  return `<svg viewBox="0 0 300 170" role="img" aria-label="Karte mit Umkreis">${streets}<ellipse id="r-circ" cx="150" cy="85" rx="40" ry="32"/>${dots}<circle cx="150" cy="85" r="7" class="rme"/><circle cx="150" cy="85" r="3" fill="#fff"/></svg>`;
-}
 const radiusBtn = (k) => { const n = JOBS.filter((j) => jobKm(j) <= k).length; return n ? `${n} ${n === 1 ? 'Schicht' : 'Schichten'} anzeigen` : 'Keine Schicht in diesem Umkreis'; };
 function radiusUpdate(k) {
   const c = $('#r-circ'); if (!c) return;
-  const r = kmPx(k); c.setAttribute('rx', r.toFixed(1)); c.setAttribute('ry', (r * .8).toFixed(1));
+  c.setAttribute('r', k); kaZoom(k);
   document.querySelectorAll('.rdot').forEach((d) => d.classList.toggle('in', +d.dataset.km <= k));
   $('#r-km').textContent = k + ' km'; const b = $('#r-btn'); b.textContent = radiusBtn(k);
   document.querySelectorAll('.rticks span').forEach((s, i) => s.classList.toggle('on', KM_STEPS[i] === k));
@@ -3933,13 +3948,13 @@ const ACT = {
   radiusSheet() {
     const i = Math.max(0, KM_STEPS.indexOf(anKm()));
     openSheet(`<h3>Umkreis einstellen</h3><p class="muted small">Du siehst nur Schichten, die du von deinem Standort aus gut erreichst.</p>
-      <div class="rmap">${radiusMap()}</div>
+      <div class="rmap">${kaMap()}</div>
       <div class="rloc">${ic('navigate')}<span class="grow"><b>Karlsruhe-Innenstadt</b><small>Aktueller Standort</small></span><button class="textlink" data-act="locChange">Ändern</button></div>
       <div class="rhead"><span>Umkreis</span><b id="r-km">${anKm()} km</b></div>
       <input type="range" class="rrange" id="r-range" min="0" max="${KM_STEPS.length - 1}" step="1" value="${i}" data-range="1" aria-label="Umkreis in Kilometern">
       <div class="rticks">${KM_STEPS.map((k) => `<span>${k}</span>`).join('')}</div>
       <button class="btn" data-act="radiusApply" id="r-btn">${radiusBtn(anKm())}</button>`);
-    radiusUpdate(KM_STEPS[i]);
+    kaView = null; kaZoom(KM_STEPS[i], true); radiusUpdate(KM_STEPS[i]);
   },
   locChange: () => toast('Standort ändern', { icon: 'navigate', sub: 'In der echten App per Adresse oder GPS. Im Prototyp bleibt es Karlsruhe.' }),
   radiusApply() {
@@ -4299,6 +4314,83 @@ function boot() {
   Object.entries(S.ag.apps).forEach(([jid, a]) => Object.entries(a).forEach(([c, st]) => { if (st === 'angefragt') scheduleAgAnswer(jid, c, 3000); if (st === 'angeboten') scheduleAgOfferAnswer(jid, c, 3000); }));
 }
 boot();
+
+/* Schematische Vektorkarte Karlsruhe (km-Koordinaten, Ursprung Marktplatz, x = Ost, y = Süd) */
+const KA_U = [0.5, 0.1]; // Standort Nutzer:in (Kronenplatz)
+const KA_JOB = { gluehwein: [-0.3, 0.05], luna: [-0.7, 0.05], hotel: [-0.3, -1.25], mozart: [-1.5, 0.6], halle: [0.9, 2.77], anker: [5.0, 1.1] };
+const kaP = (pts) => pts.map((p) => p.join(',')).join(' ');
+const kaPath = (pts) => 'M' + pts.map((p) => p.join(',')).join('L');
+function kaSmooth(pts) { // Catmull-Rom → Bezier
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(2)},${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(2)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(2)},${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(2)} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+const KA_TOWNS = [['Ettlingen', 0.2, 7.5, 1.6], ['Bruchsal', 14.2, -12.8, 2.2], ['Rastatt', -14.7, 16.8, 2.2], ['Pforzheim', 21.2, 13, 3], ['Speyer', 2, -34.2, 2.6], ['Landau', -20.9, -21, 2.4],
+  ['Wörth', -11, -4.7, 1.3], ['Stutensee', 4.7, -6.1, 1.4], ['Eggenstein', -1, -7.9, 1.1], ['Linkenheim', 0.4, -13.4, 1.1], ['Rheinstetten', -6.9, 4.3, 1.5], ['Malsch', -5.4, 14.3, 1.1],
+  ['Gaggenau', -6.1, 23.2, 1.5], ['Bretten', 22, -3, 1.6], ['Waldbronn', 5.5, 9.9, 1.1], ['Pfinztal', 9.2, 1, 1.2], ['Graben-Neudorf', 6.3, -17.9, 1.2],
+  ['Germersheim', -2.5, -23.4, 1.6], ['Kandel', -14.9, -7.9, 1.1], ['Baden-Baden', -12, 27.6, 2.4]];
+const KA_DISTRICTS = [['Innenstadt', 0.2, 0.42], ['Weststadt', -2.1, 0.05], ['Oststadt', 2.3, -0.35], ['Südstadt', 1.1, 1.55], ['Südweststadt', -1.45, 1.35], ['Mühlburg', -4, -0.4],
+  ['Durlach', 5.2, 1.75], ['Knielingen', -6, -1.9], ['Neureut', -2.3, -4.2], ['Grünwinkel', -3.8, 2], ['Daxlanden', -5.6, 2.9], ['Rüppurr', 1.2, 4.3], ['Hagsfeld', 4.6, -1.6], ['Nordstadt', -1.6, -1.8]];
+function kaBase() {
+  const rays = [];
+  for (let i = 0; i < 32; i++) { const a = i * Math.PI / 16, south = Math.sin(a) > 0.2, L = south ? 1.15 : 2.3;
+    rays.push(`<path class="${south ? 'k-st' : 'k-path'}" d="M0,-0.55L${(Math.cos(a) * L).toFixed(2)},${(-0.55 + Math.sin(a) * L).toFixed(2)}"/>`); }
+  const rhine = [[-40, 60], [-38, 50], [-34, 40], [-29, 33], [-24, 26], [-21.5, 20], [-18.5, 13.2], [-12.7, 6.5], [-9.5, 1], [-7.6, -3], [-5.5, -7], [-3.9, -10.1], [-3, -16], [-1.8, -23.4], [1, -29], [3.4, -34.4], [5, -40], [6, -50], [7, -60]];
+  const alb = [[0.5, 9], [0.3, 7.2], [-0.6, 5], [-2.4, 3], [-3.6, 1.6], [-4.6, 0.3], [-6, -1.6], [-7.2, -3.4], [-7.9, -4.6]];
+  const a5 = [[31, -60], [28, -50], [25, -40], [22, -32], [17, -22], [13, -14], [8, -7], [5.6, -1.5], [4.3, 1.8], [2.8, 5.5], [-2, 12], [-8, 20], [-13, 30], [-16, 40], [-19, 50], [-22, 60]];
+  const a8 = [[2.8, 5.5], [8, 7.5], [14, 9.5], [21, 12.2], [30, 13], [40, 14], [60, 15]];
+  const a65 = [[-11, -4.7], [-15, -11], [-21, -21], [-26, -34], [-28, -40], [-30, -50], [-32, -60]];
+  const b10 = [[-11, -4.7], [-7.6, -3], [-5.2, -1.6], [-3, 1.9], [-1, 2.55], [1.8, 2.6], [3.6, 2.1], [5, 1.6], [9, 1.1], [14, 4], [21, 12]];
+  const city = [[-5.5, -2.6], [-2.2, -2.2], [-1.2, -1.3], [1.5, -1.3], [3.5, -1.4], [5, -2.2], [6.4, 0.2], [6.3, 2.5], [3.4, 3.2], [2.6, 5.6], [0.4, 6], [-1.6, 4.6], [-5, 4.2], [-6.6, 2.6], [-7.1, -0.6]];
+  const hardt = [[-1.2, -1.3], [1.5, -1.3], [3.3, -1.5], [4.2, -3.5], [4.4, -6.6], [3, -8.6], [0.5, -9], [-0.9, -7.1], [-1.3, -4]];
+  const black = [[3, 9.5], [12, 7.5], [18, 14.5], [26, 15], [40, 17], [60, 18], [60, 60], [-24, 60], [-14, 40], [-9, 31], [-3, 25], [1, 16]];
+  const pfalz = [[-60, -60], [-31, -60], [-29, -40], [-27, -26], [-25, -12], [-28, 0], [-34, 12], [-60, 14]];
+  const bien = [[-24, -2], [-16, -1], [-12, -9], [-15, -14], [-22, -12]];
+  const ober = [[1.2, 3.2], [3.6, 2.9], [4.2, 5], [2.6, 6], [1.2, 5.2]];
+  const towns = KA_TOWNS.map(([, x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('');
+  return `<rect x="-80" y="-80" width="160" height="160" class="k-bg"/>
+    <g class="k-wood"><polygon points="${kaP(pfalz)}"/><polygon points="${kaP(black)}"/><polygon points="${kaP(bien)}"/><polygon points="${kaP(hardt)}"/><polygon points="${kaP(ober)}"/><path d="M0,-0.55m-0.62,0a0.62,0.62 0 0 1 1.24,0z"/></g>
+    <g class="k-town"><polygon points="${kaP(city)}"/>${towns}</g>
+    <path class="k-river" d="${kaSmooth(rhine)}"/><path class="k-alb" d="${kaSmooth(alb)}"/>
+    <g class="k-water"><rect x="-6.4" y="-0.9" width="0.9" height="0.18"/><rect x="-6.4" y="-0.45" width="1.1" height="0.18"/><rect x="-6.4" y="0" width="0.8" height="0.18"/></g>
+    <g class="k-park"><rect x="0.05" y="1.05" width="0.6" height="0.55" rx="0.08"/></g>
+    <path class="k-mw" d="${kaSmooth(a5)}"/><path class="k-mw" d="${kaSmooth(a8)}"/><path class="k-mw" d="${kaSmooth(a65)}"/><path class="k-pr" d="${kaSmooth(b10)}"/>
+    <g class="k-city">${rays.join('')}<path class="k-st" d="M-0.45,-0.55A0.45,0.45 0 0 0 0.45,-0.55"/>
+      <path class="k-pr" d="M-1.6,0L1.3,0M1.3,0L4.9,1.05M-1.6,0L-4.6,-0.3M-3,0.75L3,0.75M0.03,-0.55L0.1,0.75L-0.15,1.7"/></g>
+    <rect x="-0.16" y="-0.62" width="0.32" height="0.14" class="k-schloss k-city"/>`;
+}
+const KA_BIG = ['Ettlingen', 'Bruchsal', 'Rastatt', 'Pforzheim', 'Speyer', 'Landau', 'Germersheim', 'Bretten', 'Baden-Baden'];
+const KA_LABELS = () => KA_TOWNS.map(([n, x, y]) => [KA_BIG.includes(n) ? 'T' : 't', n, x, y]).concat(KA_DISTRICTS.map(([n, x, y]) => ['d', n, x, y]),
+  [['s', 'Schloss', 0, -0.85], ['s', 'Hbf', -0.15, 1.95], ['r', 'Rhein', -9.6, 1.5], ['R', 'Rhein', -21.5, 14], ['w', 'Hardtwald', 1.7, -4.8], ['c', 'Karlsruhe', 0, -2.9]]);
+function kaMap() {
+  const jobs = JOBS.map((j) => { const p = KA_JOB[j.id] || [0, 0]; return `<circle class="rdot" data-km="${jobKm(j)}" data-x="${p[0]}" data-y="${p[1]}" cx="${p[0]}" cy="${p[1]}" r="0.1"/>`; }).join('');
+  const labels = KA_LABELS().map(([t, n, x, y]) => `<text class="kl kl-${t}" x="${x}" y="${y}">${n}</text>`).join('');
+  return `<svg id="kamap" viewBox="-3 -1.7 6 3.4" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Karte von Karlsruhe mit Umkreis">${kaBase()}
+    <circle id="r-circ" cx="${KA_U[0]}" cy="${KA_U[1]}" r="1"/><g id="k-labels">${labels}</g>${jobs}
+    <circle id="k-me" cx="${KA_U[0]}" cy="${KA_U[1]}" r="0.1"/></svg>`;
+}
+let kaView = null, kaAnim = 0;
+function kaSetView(halfH) {
+  const svg = $('#kamap'); if (!svg) return;
+  const box = svg.getBoundingClientRect(), ar = box.width && box.height ? box.width / box.height : 300 / 170, halfW = halfH * ar;
+  svg.setAttribute('viewBox', `${(KA_U[0] - halfW).toFixed(3)} ${(KA_U[1] - halfH).toFixed(3)} ${(2 * halfW).toFixed(3)} ${(2 * halfH).toFixed(3)}`);
+  const kmPx = (2 * halfH) / (box.height || 170); // km pro Bildschirmpixel
+  svg.querySelectorAll('.rdot').forEach((d) => d.setAttribute('r', (6 * kmPx).toFixed(3)));
+  const me = $('#k-me'); me.setAttribute('r', (7 * kmPx).toFixed(3)); me.style.strokeWidth = (3 * kmPx).toFixed(3);
+  const lg = $('#k-labels'); lg.style.fontSize = (9.5 * kmPx).toFixed(3) + 'px'; lg.style.strokeWidth = (3 * kmPx).toFixed(3) + 'px';
+  svg.dataset.z = lg.dataset.z = halfH < 2.2 ? 'near' : halfH < 7 ? 'city' : halfH < 16 ? 'region' : 'far';
+}
+function kaZoom(k, instant) {
+  const target = Math.max(1.25, k * 1.3);
+  cancelAnimationFrame(kaAnim);
+  if (instant || kaView == null) { kaView = target; kaSetView(target); return; }
+  const from = kaView, t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / 320), e = 1 - Math.pow(1 - p, 3); kaView = from * Math.pow(target / from, e); kaSetView(kaView); if (p < 1) kaAnim = requestAnimationFrame(step); };
+  kaAnim = requestAnimationFrame(step);
+}
 
 })();</script>
 <script>if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
