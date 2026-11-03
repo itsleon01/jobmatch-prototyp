@@ -3708,7 +3708,7 @@ const SCREENS = {
     const asked = t.asked || [];
     const qs = [['exp', 'Brauche ich Erfahrung?'], ['wear', 'Was ziehe ich an?'], ['park', 'Wie komme ich hin?']].filter(([k]) => !asked.includes(k));
     const sugg = (!st || st === 'frage' || st === 'beworben') && JOBS.includes(j) && qs.length && !t.typing ? `<div class="sugg">${qs.map(([k, q]) => `<button class="chip sm" data-act="ask" data-id="${id}" data-k="${k}" data-q="${q}">${q}</button>`).join('')}</div>` : '';
-    return `<div class="scr">${sb()}${chatHdr({ back: 'an-msg', ini: j.ini, col: j.col, name: j.biz, sub: `${j.pos} · ${jobDateShort(j)}, ${j.time} Uhr`, phone: j.phone })}
+    return `<div class="scr">${sb()}${chatHdr({ back: 'an-msg', ini: j.ini, col: j.col, name: j.biz, sub: `${j.pos} · ${jobDateShort(j)}, ${j.time} Uhr`, phone: j.phone, go: JOBS.includes(j) ? 'an-job-' + id : '' })}
       <div class="msgs" id="msgs">${banner}${t.msgs.map((m) => (m.f === 'offer' || m.f === 'request' ? card(m) : bubble(m))).join('')}${t.typing ? typingDots() : ''}${sugg}</div>
       ${chatInput('anSend', id)}</div>`;
   },
