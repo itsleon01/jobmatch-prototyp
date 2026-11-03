@@ -4431,11 +4431,19 @@ function boot() {
 }
 /* ---------- Vertragsmechanik: Unterschrift, Stammdaten, Check-in, Stundenzettel ---------- */
 const EMP = {
-  'Student:in': ['Kurzfristige Beschäftigung', 'Sozialversicherungsfrei, bis 70 Arbeitstage im Jahr. Du hast 2026 noch 61 Tage frei.'],
-  'Rentner:in': ['Kurzfristige Beschäftigung', 'Kein Einfluss auf deine Rente. Du hast 2026 noch 61 von 70 Arbeitstagen frei.'],
-  'Minijob': ['Minijob', 'Bis 603 € im Monat ohne Abzüge. Im November sind noch 527 € frei.'],
-  'Hauptjob woanders': ['Kurzfristige Beschäftigung', 'Als Nebenjob bis 70 Arbeitstage im Jahr. Du hast 2026 noch 61 Tage frei.'],
+  'Student:in': ['Kurzfristige Beschäftigung', 'Sozialversicherungsfrei, bis 70 Arbeitstage im Jahr, alle Arbeitgeber zusammen.'],
+  'Rentner:in': ['Kurzfristige Beschäftigung', 'Kein Einfluss auf deine Rente. Bis 70 Arbeitstage im Jahr, alle Arbeitgeber zusammen.'],
+  'Minijob': ['Minijob', 'Bis 603 € im Monat ohne Abzüge, alle Minijobs zusammen.'],
+  'Hauptjob woanders': ['Kurzfristige Beschäftigung', 'Als Nebenjob bis 70 Arbeitstage im Jahr, alle Arbeitgeber zusammen.'],
 };
+/* Jobs außerhalb von JobMatch zählen mit: eine Frage in der Stammdaten-Karte, „Nein“ ist vorausgewählt */
+const OTHER_DAYS = { 'bis 10 Tage': 10, '11–30 Tage': 30, 'mehr als 30': 45 };
+function empTxt(P) {
+  const [art, base] = EMP[P.status] || EMP['Student:in'];
+  if (art === 'Minijob') return `${base} ${P.other ? 'Deinen anderen Minijob rechnen wir bei der Anmeldung mit ein.' : 'Im November sind laut JobMatch noch 527 € frei.'}`;
+  const free = 61 - (P.other ? OTHER_DAYS[P.otherDays] || 10 : 0);
+  return `${base} Du hast 2026 noch ${P.other ? 'etwa ' : ''}${free} Tage frei${P.other ? ', die Minijob-Zentrale bestätigt das bei der Anmeldung' : ''}.`;
+}
 const PAY_DEMO = { steuer: '47 036 892 815', sv: '12 150899 Z 503', iban: 'DE89 3704 0044 0532 0130 00', status: 'Student:in' };
 const empOf = () => EMP[(S.an.pay || S.ui.pay || PAY_DEMO).status] || EMP['Student:in'];
 const hmToMin = (s) => { const [h, m] = s.trim().split(':').map(Number); return h * 60 + m; };
@@ -4485,7 +4493,7 @@ Object.assign(SCREENS, {
     const t = S.an.threads[id] || {}, signed = t.status === 'zugesagt';
     const open = (t.msgs || []).some((x) => (x.f === 'offer' || x.f === 'request') && (x.state || 'open') === 'open');
     if (!signed && !open) return { redirect: 'an-chat-' + id };
-    const [art, artTxt] = empOf(), sh = anShift(id) || {}, E = S.ui.errors || {};
+    const [art] = empOf(), sh = anShift(id) || {}, E = S.ui.errors || {};
     const rows = [['Tätigkeit', j.pos], ['Datum', j.range ? j.dateText : jobDate(j)], ['Einsatzzeit', j.time + ' Uhr'], ['Vergütung', payFix(j)], ['Zuschläge', extraFor(j) || 'Keine an diesem Tag'], ['Art', art]];
     const rules = `<div class="rules stack tight"><b>Gut zu wissen</b>${[
       ['calendar-outline', cancelLine(j)],
@@ -4511,7 +4519,8 @@ Object.assign(SCREENS, {
       ${field('Sozialversicherungsnummer *', 'ui.pay.sv', P.sv, { id: 'p-sv', err: E.sv })}
       ${field('IBAN für den Lohn *', 'ui.pay.iban', P.iban, { id: 'p-iban', err: E.iban })}
       <div class="stack tight"><span class="flabel">Was machst du hauptsächlich?</span><div class="wrap">${Object.keys(EMP).map((k) => `<button class="chip sm ${P.status === k ? 'on' : ''}" data-act="payStatus" data-v="${k}">${k}</button>`).join('')}</div></div>
-      <div class="note">${ic('information-circle')}<span><b>${art}:</b> ${artTxt}</span></div></div>`;
+      <div class="stack tight"><span class="flabel">${art === 'Minijob' ? 'Hast du noch einen anderen Minijob?' : 'Hattest du 2026 schon Aushilfsjobs außerhalb von JobMatch?'}</span><div class="wrap">${[['0', 'Nein'], ['1', 'Ja']].map(([v, l]) => `<button class="chip sm ${!!P.other === (v === '1') ? 'on' : ''}" data-act="payOther" data-v="${v}">${l}</button>`).join('')}</div>${P.other && art !== 'Minijob' ? `<span class="small" style="margin-top:4px">Wie viele Tage ungefähr?</span><div class="wrap">${Object.keys(OTHER_DAYS).map((k) => `<button class="chip sm ${(P.otherDays || 'bis 10 Tage') === k ? 'on' : ''}" data-act="payOtherDays" data-v="${k}">${k}</button>`).join('')}</div>` : ''}</div>
+      <div class="note">${ic('information-circle')}<span><b>${art}:</b> ${empTxt(P)}</span></div></div>`;
     return `<div class="scr gray">${sb()}${hdr('Vertrag prüfen', { back: 'an-chat-' + id, sub: j.biz })}<div class="body">
       ${stamm}${card}<div class="box stack"><b>Ablauf</b>${stepList([[`${j.biz} hat unterschrieben`, 'Zusammen mit dem Angebot', true], ['Deine Unterschrift', 'Per Face ID, dauert zwei Sekunden', false], ['Anmeldung bei der Sozialversicherung', 'Macht JobMatch danach automatisch', false]])}${rules}</div></div>
       <div class="foot"><button class="btn" data-act="anSign" data-id="${id}">${ic('scan-outline')}Mit Face ID unterschreiben</button><p class="fine">Mit deiner Unterschrift ist der Arbeitsvertrag gültig.</p></div></div>`;
@@ -4579,6 +4588,8 @@ function hoursCard() {
 
 Object.assign(ACT, {
   payStatus(d) { S.ui.pay.status = d.v; persist(); rerender(); },
+  payOther(d) { S.ui.pay.other = d.v === '1'; if (S.ui.pay.other && !S.ui.pay.otherDays) S.ui.pay.otherDays = 'bis 10 Tage'; persist(); rerender(); },
+  payOtherDays(d) { S.ui.pay.otherDays = d.v; persist(); rerender(); },
   anSign(d) {
     if (!S.an.pay) {
       const P = S.ui.pay || {}, E = {};
